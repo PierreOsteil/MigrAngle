@@ -1,0 +1,38 @@
+---
+title: "MigrAngl"
+author: "Pierre Osteil"
+date: "26/04/2024"
+output: html_document
+toc: TRUE
+---
+
+# Design of the fonction
+
+This function calculates the angle in degrees between two vectors by taking the dot product of the vectors, dividing it by the product of their magnitudes, and then taking the arccosine of the result. it is the inverse of the cosine function. It returns the angle in radians whose cosine is the specified value.
+
+θ = cos-1 [ (a. b) / (||a|| * ||b||) ] where ||x|| is the magnitude of a vector which is the square root of the sum of the squares of the elements of the vector.
+
+```{r}
+angle_between_vectors <- function(v1, v2) {
+  dot_product <- sum(v1 * v2)
+  magnitude_v1 <- sqrt(sum(v1^2))
+  magnitude_v2 <- sqrt(sum(v2^2))
+  angle <- acos(dot_product / (magnitude_v1 * magnitude_v2))
+  angle_in_degrees <- angle * (180 / pi)
+  return(angle_in_degrees)
+}
+
+# Example usage
+vector1 <- c(3, 4, 5)
+vector2 <- c(1, 2, 2)
+angle_between_vectors(vector1, vector2)
+
+```
+
+# Test with data from ImageJ
+## open the data file
+```{r}
+read.csv("MigrAngl.csv", sep = ";", h = T)
+```
+
+
