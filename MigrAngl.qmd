@@ -41,7 +41,7 @@ angle_between_vectors(vector1, vector2)
 
 ```
 
-# Test with data from ImageJ
+# Data from ImageJ
 ## open the data file
 ```{r}
 dir <- getwd()
@@ -51,8 +51,8 @@ listFiles <- list.files(file.path(dir, "data/"))
 angleDat <- data.frame()
 
 for (i in 1:length(listFiles)) {
-temp <- read.csv(file.path(dir, "data/", listFiles[1]), h= TRUE, sep = ";")
-metadata_fileName <- strsplit(listFiles[1], "_")
+temp <- read.csv(file.path(dir, "data/", listFiles[i]), h= TRUE, sep = ";")
+metadata_fileName <- strsplit(listFiles[i], "_")
 temp$date <- strsplit(metadata_fileName[[1]][1], " ")[[1]][4]
 temp$ID_Embryon <- as.numeric(strsplit(strsplit(metadata_fileName[[1]][4], "-")[[1]][2], ".", fixed = T)[[1]][1])
 temp$unique_ID_Embryon <- paste0(temp$date, "_", temp$ID_Embryon) # metadata on embryo name
@@ -62,32 +62,70 @@ dim(angleDat)
 head(angleDat)
 ```
 
-## metadata on cells to vector1
-
+## metadata on cells that needs to be ompared
 ```{r}
 angleDat_meta <- str_split_fixed(angleDat$Name, pattern = "_", n = 4)
 head(angleDat_meta)
 
-
-colnames(angleDat_meta) <- c("ID_Omero", "CellType", "cellNumber", "CentreName")
+colnames(angleDat_meta) <- c("ID_Omero", "CellType", "cellNumber", "CenterName")
 angleDat_complete <- cbind.data.frame(angleDat, angleDat_meta)
+
+angleDat_complete$unique_cell_ID <- paste0(angleDat_complete$unique_ID_Embryon, "_", angleDat_complete$cellNumber) # label each cell individually
 
 head(angleDat_complete)
 ```
 
-## calulcate the angle between vectors
-
+# calculate the angle between vectors
 from coordinates of 4 points 2 in the TE and 2 in the PE, I will construct a vector for each and calculate the angle.   
 ```{r}
 
-test <- angleDat_complete |> filter(unique_ID_Embryon == "20220516_1" & cellNumber == 1)
+angleDat_complete_noZT <- angleDat_complete |> filter(CellType != "ZT")
+
+angleTUBG1 <- data.frame( )
+
+for (i in 1:length(angleDat_complete_noZT$unique_cell_ID)) {
+    
+# loop each cell of each embryo
+temp <- angleDat_complete_noZT |> filter(unique_cell_ID == unique_cell_ID[i]) 
+
+# calucate the vector
+# TE : N2 - N1
+# PE : C - N
+TE_vec <- temp |> filter(CenterName == "N2") |> select("X","Y","Z") - 
+             temp |> filter(CenterName == "N1") |> select("X","Y","Z") # TE1_N2 - TE1_N1
+
+PE_vec <- temp |> filter(CenterName == "C") |> select("X","Y","Z") - 
+             temp |> filter(CenterName == "N") |> select("X","Y","Z") # PE_C - PE_N
+
+# Apply the function to calculate the angle
+angle <- angle_between_vectors(TE_vec, PE_vec)
+print(paste0(c(angleDat_complete_noZT$unique_ID_Embryon[i] ,angleDat_complete_noZT$cellNumber[j], angle), sep = ""))
+
+#increment the table
+angleTUBG1 <- rbind.data.frame(angleTUBG1, c(angleDat_complete_noZT$unique_cell_ID[i], angle))
+
+}
+colnames(angleTUBG1) <- c("unique_cell_ID", "angle")
+
+angleTUBG1 <- angleTUBG1  |> distinct(unique_cell_ID, .keep_all = TRUE)
+angleTUBG1
+```
 
 
+# calculate the distance of each cell from the ZT
+The distance of the center of the PE cells from the ZT. Will take the PE_N value versus the ZT values
 
-TE_vec <- c(X_TEN2, Y_TEN2, Z_TEN2) - c(X_TEN1, Y_TEN1, Z_TEN1) # TE1 N2 - TE1 N1
-PE_vec <- c(X_PEC, Y_PEC, Z_PEC) - c(X_PEN, Y_PEN, Z_PEN) # PE C - PE N
+```{r}
+# select the cells
+temp <- angleDat_complete|> filter(unique_cell_ID == unique_cell_ID[1]) 
+#select the corresponding embryo ZT point
+temp_ZT <- angleDat_complete |> 
+           filter(CellType == "ZT") |> 
+           filter(unique_ID_Embryon == paste0(str_split_fixed(angleDat_complete$unique_cell_ID[1], "_", n = 3)[1,1],  
+                                              "_",  
+                                              str_split_fixed(angleDat_complete$unique_cell_ID[1], "_", n = 3)[1,2])) 
 
 
-angle_between_vectors(TE_vec, PE_vec)
+angleDat_complete |> str_split_fixed(unique_cell_ID[1], "_", n = 3)[[1]][1]
 
 ```
