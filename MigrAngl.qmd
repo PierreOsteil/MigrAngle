@@ -65,18 +65,27 @@ head(angleDat)
 ## metadata on cells to vector1
 
 ```{r}
-angleDat_meta <- str_split_fixed(angleDat$Name, pattern = "_", n = 3)
-colnames(angleDat_meta) <- c("date", "ID_Cell", "cellType")
+angleDat_meta <- str_split_fixed(angleDat$Name, pattern = "_", n = 4)
+head(angleDat_meta)
 
 
+colnames(angleDat_meta) <- c("ID_Omero", "CellType", "cellNumber", "CentreName")
+angleDat_complete <- cbind.data.frame(angleDat, angleDat_meta)
+
+head(angleDat_complete)
 ```
 
 ## calulcate the angle between vectors
 
 from coordinates of 4 points 2 in the TE and 2 in the PE, I will construct a vector for each and calculate the angle.   
 ```{r}
-TE_vec <- c(X_TE1, Y_TE1, Z_TE1) - c(X_TE2, Y_TE2, Z_TE2)
-PE_vec <- c(X_PE1, Y_PE1, Z_PE1) - c(X_PE2, Y_PE2, Z_PE2)
+
+test <- angleDat_complete |> filter(unique_ID_Embryon == "20220516_1" & cellNumber == 1)
+
+
+
+TE_vec <- c(X_TEN2, Y_TEN2, Z_TEN2) - c(X_TEN1, Y_TEN1, Z_TEN1) # TE1 N2 - TE1 N1
+PE_vec <- c(X_PEC, Y_PEC, Z_PEC) - c(X_PEN, Y_PEN, Z_PEN) # PE C - PE N
 
 
 angle_between_vectors(TE_vec, PE_vec)
