@@ -8,9 +8,11 @@ toc: TRUE
 
 # Design of the fonction
 
-This function calculates the angle in degrees between two vectors by taking the dot product of the vectors, dividing it by the product of their magnitudes, and then taking the arccosine of the result. it is the inverse of the cosine function. It returns the angle in radians whose cosine is the specified value.
+This function calculates the angle in degrees between two vectors by taking the dot product of the vectors, dividing it by the product of their magnitudes, and then taking the arccosine of the result. The acros function retunrs  the inverse of the cosine function. It returns the angle in radians whose cosine is the specified value.
 
-θ = cos-1 [ (a. b) / (||a|| * ||b||) ] where ||x|| is the magnitude of a vector which is the square root of the sum of the squares of the elements of the vector.
+θ = cos-1 [ (a. b) / (||a|| * ||b||) ] 
+
+where ||x|| is the magnitude of a vector which is the square root of the sum of the squares of the elements of the vector.
 
 ```{r}
 angle_between_vectors <- function(v1, v2) {
@@ -36,3 +38,14 @@ read.csv("MigrAngl.csv", sep = ";", h = T)
 ```
 
 
+## calulcate the angle between vectors
+
+from coordinates of 4 points 2 in the TE and 2 in the PE, I will construct a vector for each and calculate the angle.   
+```{r}
+TE_vec <- c(X_TE1, Y_TE1, Z_TE1) - c(X_TE2, Y_TE2, Z_TE2)
+PE_vec <- c(X_PE1, Y_PE1, Z_PE1) - c(X_PE2, Y_PE2, Z_PE2)
+
+
+angle_between_vectors(TE_vec, PE_vec)
+
+```
