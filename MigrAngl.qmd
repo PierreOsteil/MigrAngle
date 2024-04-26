@@ -1,10 +1,18 @@
 ---
-title: "MigrAngl"
+title: "MigrAnglR"
 author: "Pierre Osteil"
 date: "26/04/2024"
 output: html_document
 toc: TRUE
 ---
+
+# Packages
+
+```{r}
+library(tidyverse)
+```
+
+
 
 # Design of the fonction
 
@@ -13,6 +21,8 @@ This function calculates the angle in degrees between two vectors by taking the 
 θ = cos-1 [ (a. b) / (||a|| * ||b||) ] 
 
 where ||x|| is the magnitude of a vector which is the square root of the sum of the squares of the elements of the vector.
+
+https://www.youtube.com/watch?v=dYPRYO8QhxU
 
 ```{r}
 angle_between_vectors <- function(v1, v2) {
@@ -34,9 +44,32 @@ angle_between_vectors(vector1, vector2)
 # Test with data from ImageJ
 ## open the data file
 ```{r}
-read.csv("MigrAngl.csv", sep = ";", h = T)
+dir <- getwd()
+listFiles <- list.files(file.path(dir, "data/"))
+
+# need a for loop opening files.
+angleDat <- data.frame()
+
+for (i in 1:length(listFiles)) {
+temp <- read.csv(file.path(dir, "data/", listFiles[1]), h= TRUE, sep = ";")
+metadata_fileName <- strsplit(listFiles[1], "_")
+temp$date <- strsplit(metadata_fileName[[1]][1], " ")[[1]][4]
+temp$ID_Embryon <- as.numeric(strsplit(strsplit(metadata_fileName[[1]][4], "-")[[1]][2], ".", fixed = T)[[1]][1])
+temp$unique_ID_Embryon <- paste0(temp$date, "_", temp$ID_Embryon) # metadata on embryo name
+angleDat <- rbind.data.frame(angleDat, temp)
+}
+dim(angleDat)
+head(angleDat)
 ```
 
+## metadata on cells to vector1
+
+```{r}
+angleDat_meta <- str_split_fixed(angleDat$Name, pattern = "_", n = 3)
+colnames(angleDat_meta) <- c("date", "ID_Cell", "cellType")
+
+
+```
 
 ## calulcate the angle between vectors
 
