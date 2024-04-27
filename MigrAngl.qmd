@@ -10,6 +10,7 @@ toc: TRUE
 
 ```{r}
 library(tidyverse)
+library(ggpubr)
 ```
 
 
@@ -116,16 +117,54 @@ angleTUBG1
 The distance of the center of the PE cells from the ZT. Will take the PE_N value versus the ZT values
 
 ```{r}
+
+ZT_dist <- data.frame()
+
+for (i in 1:length(angleDat_complete_noZT$unique_cell_ID)) {
 # select the cells
-temp <- angleDat_complete|> filter(unique_cell_ID == unique_cell_ID[1]) 
-#select the corresponding embryo ZT point
-temp_ZT <- angleDat_complete |> 
-           filter(CellType == "ZT") |> 
-           filter(unique_ID_Embryon == paste0(str_split_fixed(angleDat_complete$unique_cell_ID[1], "_", n = 3)[1,1],  
-                                              "_",  
-                                              str_split_fixed(angleDat_complete$unique_cell_ID[1], "_", n = 3)[1,2])) 
+     temp <- angleDat_complete_noZT|> filter(unique_cell_ID == unique_cell_ID[i]) 
+     #select the corresponding embryo ZT point
+     temp_ZT <- angleDat_complete |> 
+                filter(CellType == "ZT") |> 
+                filter(unique_ID_Embryon == paste0(str_split_fixed(angleDat_complete$unique_cell_ID[i], "_", n = 3)[1,1],  
+                                                   "_",  
+                                                   str_split_fixed(angleDat_complete$unique_cell_ID[i], "_", n = 3)[1,2])) 
+     
+     ZT_left_vec <- temp |> filter(CenterName == "N") |> select("X","Y","Z") - 
+                  temp_ZT |> filter(cellNumber == "left") |> select("X","Y","Z")
+     
+     ZT_right_vec <- temp |> filter(CenterName == "N") |> select("X","Y","Z") - 
+                  temp_ZT |> filter(cellNumber == "right") |> select("X","Y","Z")
+     
+     # take the smallest distance from ZT left or right 
+     ZT_dist_min <- min(sqrt(ZT_left_vec[1]^2 + ZT_left_vec[2]^2 + ZT_left_vec[3]^2), 
+                    sqrt(ZT_right_vec[1]^2 + ZT_right_vec[2]^2 + ZT_right_vec[3]^2)) # The euclidean distance from the ZT
+
+ZT_dist <- rbind.data.frame(ZT_dist, c(angleDat_complete_noZT$unique_cell_ID[i], ZT_dist_min))
+
+}
+
+colnames(ZT_dist) <- c("unique_cell_ID", "ZT_dist")
+ZT_dist <- ZT_dist  |> distinct(unique_cell_ID, .keep_all = TRUE)
+class(ZT_dist$ZT_dist)
+
+head(ZT_dist)
+
+angle_dist_TUBG1 <- merge(angleTUBG1, ZT_dist, by = "unique_cell_ID")
+head(angle_dist_TUBG1)
+class(angle_dist_TUBG1$angle)
+```
+
+# Plot correlation from angel of TUGB1 to distance to ZT_dist
 
 
-angleDat_complete |> str_split_fixed(unique_cell_ID[1], "_", n = 3)[[1]][1]
+```{r}
+angle_dist_TUBG1$angle <- as.numeric(angle_dist_TUBG1$angle)
+angle_dist_TUBG1$ZT_dist <- as.numeric(angle_dist_TUBG1$ZT_dist)
+
+
+ggscatter(angle_dist_TUBG1, x = "ZT_dist", y = "angle", color = "embryoID", add = "reg.line", conf.int = TRUE,)
+
+
 
 ```
