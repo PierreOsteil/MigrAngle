@@ -9,7 +9,7 @@
 <meta name="author" content="Pierre Osteil">
 <meta name="dcterms.date" content="2026-02-04">
 
-<title>MigrAngl</title>
+<title>MigrAnglR</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -81,8 +81,16 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#design-of-the-fonction" id="toc-design-of-the-fonction" class="nav-link active" data-scroll-target="#design-of-the-fonction">Design of the fonction</a></li>
-  <li><a href="#test-with-data-from-imagej" id="toc-test-with-data-from-imagej" class="nav-link" data-scroll-target="#test-with-data-from-imagej">test with data from ImageJ</a></li>
+  <li><a href="#packages" id="toc-packages" class="nav-link active" data-scroll-target="#packages">Packages</a></li>
+  <li><a href="#design-of-the-fonction" id="toc-design-of-the-fonction" class="nav-link" data-scroll-target="#design-of-the-fonction">Design of the fonction</a></li>
+  <li><a href="#data-from-imagej" id="toc-data-from-imagej" class="nav-link" data-scroll-target="#data-from-imagej">Data from ImageJ</a>
+  <ul class="collapse">
+  <li><a href="#open-the-data-file" id="toc-open-the-data-file" class="nav-link" data-scroll-target="#open-the-data-file">open the data file</a></li>
+  <li><a href="#metadata-on-cells-that-needs-to-be-ompared" id="toc-metadata-on-cells-that-needs-to-be-ompared" class="nav-link" data-scroll-target="#metadata-on-cells-that-needs-to-be-ompared">metadata on cells that needs to be ompared</a></li>
+  </ul></li>
+  <li><a href="#calculate-the-angle-between-vectors" id="toc-calculate-the-angle-between-vectors" class="nav-link" data-scroll-target="#calculate-the-angle-between-vectors">calculate the angle between vectors</a></li>
+  <li><a href="#calculate-the-distance-of-each-cell-from-the-zt" id="toc-calculate-the-distance-of-each-cell-from-the-zt" class="nav-link" data-scroll-target="#calculate-the-distance-of-each-cell-from-the-zt">calculate the distance of each cell from the ZT</a></li>
+  <li><a href="#plot-correlation-from-angel-of-tugb1-to-distance-to-zt_dist" id="toc-plot-correlation-from-angel-of-tugb1-to-distance-to-zt_dist" class="nav-link" data-scroll-target="#plot-correlation-from-angel-of-tugb1-to-distance-to-zt_dist">Plot correlation from angel of TUGB1 to distance to ZT_dist</a></li>
   </ul>
 </nav>
 </div>
@@ -90,7 +98,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">MigrAngl</h1>
+<h1 class="title">MigrAnglR</h1>
 </div>
 
 
@@ -117,31 +125,440 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </header>
 
+<section id="packages" class="level1">
+<h1>Packages</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'ggplot2' was built under R version 4.3.2</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'dplyr' was built under R version 4.3.2</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'stringr' was built under R version 4.3.2</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: package 'lubridate' was built under R version 4.3.2</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.4     ✔ readr     2.1.4
+✔ forcats   1.0.0     ✔ stringr   1.5.1
+✔ ggplot2   3.4.4     ✔ tibble    3.2.1
+✔ lubridate 1.9.3     ✔ tidyr     1.3.0
+✔ purrr     1.0.2     
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggpubr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
 <section id="design-of-the-fonction" class="level1">
 <h1>Design of the fonction</h1>
-<p>This function calculates the angle in degrees between two vectors by taking the dot product of the vectors, dividing it by the product of their magnitudes, and then taking the arccosine of the result. it is the inverse of the cosine function. It returns the angle in radians whose cosine is the specified value.</p>
-<p>θ = cos-1 [ (a. b) / (||a|| * ||b||) ] where ||x|| is the magnitude of a vector which is the square root of the sum of the squares of the elements of the vector.</p>
+<p>This function calculates the angle in degrees between two vectors by taking the dot product of the vectors, dividing it by the product of their magnitudes, and then taking the arccosine of the result. The acros function retunrs the inverse of the cosine function. It returns the angle in radians whose cosine is the specified value.</p>
+<p>θ = cos-1 [ (a. b) / (||a|| * ||b||) ]</p>
+<p>where ||x|| is the magnitude of a vector which is the square root of the sum of the squares of the elements of the vector.</p>
+<p>https://www.youtube.com/watch?v=dYPRYO8QhxU</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>angle_between_vectors <span class="ot">&lt;-</span> <span class="cf">function</span>(v1, v2) {</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  dot_product <span class="ot">&lt;-</span> <span class="fu">sum</span>(v1 <span class="sc">*</span> v2)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  magnitude_v1 <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">sum</span>(v1<span class="sc">^</span><span class="dv">2</span>))</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  magnitude_v2 <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">sum</span>(v2<span class="sc">^</span><span class="dv">2</span>))</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  angle <span class="ot">&lt;-</span> <span class="fu">acos</span>(dot_product <span class="sc">/</span> (magnitude_v1 <span class="sc">*</span> magnitude_v2))</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  angle_in_degrees <span class="ot">&lt;-</span> angle <span class="sc">*</span> (<span class="dv">180</span> <span class="sc">/</span> pi)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(angle_in_degrees)</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Example usage</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>vector1 <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>)</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>vector2 <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>)</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">angle_between_vectors</span>(vector1, vector2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>angle_between_vectors <span class="ot">&lt;-</span> <span class="cf">function</span>(v1, v2) {</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  dot_product <span class="ot">&lt;-</span> <span class="fu">sum</span>(v1 <span class="sc">*</span> v2)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  magnitude_v1 <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">sum</span>(v1<span class="sc">^</span><span class="dv">2</span>))</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  magnitude_v2 <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="fu">sum</span>(v2<span class="sc">^</span><span class="dv">2</span>))</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  angle <span class="ot">&lt;-</span> <span class="fu">acos</span>(dot_product <span class="sc">/</span> (magnitude_v1 <span class="sc">*</span> magnitude_v2))</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  angle_in_degrees <span class="ot">&lt;-</span> angle <span class="sc">*</span> (<span class="dv">180</span> <span class="sc">/</span> pi)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(angle_in_degrees)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Example usage</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>vector1 <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>)</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>vector2 <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">2</span>)</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="fu">angle_between_vectors</span>(vector1, vector2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 8.130102</code></pre>
 </div>
 </div>
 </section>
-<section id="test-with-data-from-imagej" class="level1">
-<h1>test with data from ImageJ</h1>
+<section id="data-from-imagej" class="level1">
+<h1>Data from ImageJ</h1>
+<section id="open-the-data-file" class="level2">
+<h2 class="anchored" data-anchor-id="open-the-data-file">open the data file</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>dir <span class="ot">&lt;-</span> <span class="fu">getwd</span>()</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>listFiles <span class="ot">&lt;-</span> <span class="fu">list.files</span>(<span class="fu">file.path</span>(dir, <span class="st">"data/"</span>))</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># need a for loop opening files.</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>angleDat <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(listFiles)) {</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">file.path</span>(dir, <span class="st">"data/"</span>, listFiles[i]), <span class="at">h=</span> <span class="cn">TRUE</span>, <span class="at">sep =</span> <span class="st">";"</span>)</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>metadata_fileName <span class="ot">&lt;-</span> <span class="fu">strsplit</span>(listFiles[i], <span class="st">"_"</span>)</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>temp<span class="sc">$</span>date <span class="ot">&lt;-</span> <span class="fu">strsplit</span>(metadata_fileName[[<span class="dv">1</span>]][<span class="dv">1</span>], <span class="st">" "</span>)[[<span class="dv">1</span>]][<span class="dv">4</span>]</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>temp<span class="sc">$</span>ID_Embryon <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">strsplit</span>(<span class="fu">strsplit</span>(metadata_fileName[[<span class="dv">1</span>]][<span class="dv">4</span>], <span class="st">"-"</span>)[[<span class="dv">1</span>]][<span class="dv">2</span>], <span class="st">"."</span>, <span class="at">fixed =</span> T)[[<span class="dv">1</span>]][<span class="dv">1</span>])</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>temp<span class="sc">$</span>unique_ID_Embryon <span class="ot">&lt;-</span> <span class="fu">paste0</span>(temp<span class="sc">$</span>date, <span class="st">"_"</span>, temp<span class="sc">$</span>ID_Embryon) <span class="co"># metadata on embryo name</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>angleDat <span class="ot">&lt;-</span> <span class="fu">rbind.data.frame</span>(angleDat, temp)</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(angleDat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 146  20</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(angleDat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  X.1 Index           Name     Type Group   X   Y Width Height Points  Color
+1   1     0  923455_PE_1_N Freehand  none 125 152    23     49    202 yellow
+2   2     1 923455_TE_1_N1 Freehand  none  86 155    35     42    207   none
+3   3     2 923455_TE_1_N2 Freehand  none 118 117    24     39    163   none
+4   4     3  923455_PE_1_C Freehand  none 139 193     6      4     31   none
+5   5     4  923455_PE_2_N Freehand  none 373 258    27     34    155   none
+6   6     5  923455_PE_2_C Freehand  none 371 268     6      5     27   none
+  Fill LWidth Pos C  Z T     date ID_Embryon unique_ID_Embryon
+1 none      0   0 0 46 1 20220516          1        20220516_1
+2 none      0   0 0 46 1 20220516          1        20220516_1
+3 none      0   0 0 46 1 20220516          1        20220516_1
+4 none      0   0 0 46 1 20220516          1        20220516_1
+5 none      0   0 0 47 1 20220516          1        20220516_1
+6 none      0   0 0 47 1 20220516          1        20220516_1</code></pre>
+</div>
+</div>
+</section>
+<section id="metadata-on-cells-that-needs-to-be-ompared" class="level2">
+<h2 class="anchored" data-anchor-id="metadata-on-cells-that-needs-to-be-ompared">metadata on cells that needs to be ompared</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>angleDat_meta <span class="ot">&lt;-</span> <span class="fu">str_split_fixed</span>(angleDat<span class="sc">$</span>Name, <span class="at">pattern =</span> <span class="st">"_"</span>, <span class="at">n =</span> <span class="dv">4</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(angleDat_meta)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>     [,1]     [,2] [,3] [,4]
+[1,] "923455" "PE" "1"  "N" 
+[2,] "923455" "TE" "1"  "N1"
+[3,] "923455" "TE" "1"  "N2"
+[4,] "923455" "PE" "1"  "C" 
+[5,] "923455" "PE" "2"  "N" 
+[6,] "923455" "PE" "2"  "C" </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(angleDat_meta) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"ID_Omero"</span>, <span class="st">"CellType"</span>, <span class="st">"cellNumber"</span>, <span class="st">"CenterName"</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>angleDat_complete <span class="ot">&lt;-</span> <span class="fu">cbind.data.frame</span>(angleDat, angleDat_meta)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>angleDat_complete<span class="sc">$</span>unique_cell_ID <span class="ot">&lt;-</span> <span class="fu">paste0</span>(angleDat_complete<span class="sc">$</span>unique_ID_Embryon, <span class="st">"_"</span>, angleDat_complete<span class="sc">$</span>cellNumber) <span class="co"># label each cell individually</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(angleDat_complete)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  X.1 Index           Name     Type Group   X   Y Width Height Points  Color
+1   1     0  923455_PE_1_N Freehand  none 125 152    23     49    202 yellow
+2   2     1 923455_TE_1_N1 Freehand  none  86 155    35     42    207   none
+3   3     2 923455_TE_1_N2 Freehand  none 118 117    24     39    163   none
+4   4     3  923455_PE_1_C Freehand  none 139 193     6      4     31   none
+5   5     4  923455_PE_2_N Freehand  none 373 258    27     34    155   none
+6   6     5  923455_PE_2_C Freehand  none 371 268     6      5     27   none
+  Fill LWidth Pos C  Z T     date ID_Embryon unique_ID_Embryon ID_Omero
+1 none      0   0 0 46 1 20220516          1        20220516_1   923455
+2 none      0   0 0 46 1 20220516          1        20220516_1   923455
+3 none      0   0 0 46 1 20220516          1        20220516_1   923455
+4 none      0   0 0 46 1 20220516          1        20220516_1   923455
+5 none      0   0 0 47 1 20220516          1        20220516_1   923455
+6 none      0   0 0 47 1 20220516          1        20220516_1   923455
+  CellType cellNumber CenterName unique_cell_ID
+1       PE          1          N   20220516_1_1
+2       TE          1         N1   20220516_1_1
+3       TE          1         N2   20220516_1_1
+4       PE          1          C   20220516_1_1
+5       PE          2          N   20220516_1_2
+6       PE          2          C   20220516_1_2</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="calculate-the-angle-between-vectors" class="level1">
+<h1>calculate the angle between vectors</h1>
+<p>from coordinates of 4 points 2 in the TE and 2 in the PE, I will construct a vector for each and calculate the angle.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>angleDat_complete_noZT <span class="ot">&lt;-</span> angleDat_complete <span class="sc">|&gt;</span> <span class="fu">filter</span>(CellType <span class="sc">!=</span> <span class="st">"ZT"</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>angleTUBG1 <span class="ot">&lt;-</span> <span class="fu">data.frame</span>( )</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(angleDat_complete_noZT<span class="sc">$</span>unique_cell_ID)) {</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co"># loop each cell of each embryo</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>temp <span class="ot">&lt;-</span> angleDat_complete_noZT <span class="sc">|&gt;</span> <span class="fu">filter</span>(unique_cell_ID <span class="sc">==</span> unique_cell_ID[i]) </span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="co"># calucate the vector</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="co"># TE : N2 - N1</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="co"># PE : C - N</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>TE_vec <span class="ot">&lt;-</span> temp <span class="sc">|&gt;</span> <span class="fu">filter</span>(CenterName <span class="sc">==</span> <span class="st">"N2"</span>) <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="st">"X"</span>,<span class="st">"Y"</span>,<span class="st">"Z"</span>) <span class="sc">-</span> </span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>             temp <span class="sc">|&gt;</span> <span class="fu">filter</span>(CenterName <span class="sc">==</span> <span class="st">"N1"</span>) <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="st">"X"</span>,<span class="st">"Y"</span>,<span class="st">"Z"</span>) <span class="co"># TE1_N2 - TE1_N1</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>PE_vec <span class="ot">&lt;-</span> temp <span class="sc">|&gt;</span> <span class="fu">filter</span>(CenterName <span class="sc">==</span> <span class="st">"C"</span>) <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="st">"X"</span>,<span class="st">"Y"</span>,<span class="st">"Z"</span>) <span class="sc">-</span> </span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>             temp <span class="sc">|&gt;</span> <span class="fu">filter</span>(CenterName <span class="sc">==</span> <span class="st">"N"</span>) <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="st">"X"</span>,<span class="st">"Y"</span>,<span class="st">"Z"</span>) <span class="co"># PE_C - PE_N</span></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply the function to calculate the angle</span></span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>angle <span class="ot">&lt;-</span> <span class="fu">angle_between_vectors</span>(TE_vec, PE_vec)</span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">paste0</span>(<span class="fu">c</span>(angleDat_complete_noZT<span class="sc">$</span>unique_ID_Embryon[i], angle), <span class="at">sep =</span> <span class="st">""</span>))</span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a><span class="co">#increment the table</span></span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>angleTUBG1 <span class="ot">&lt;-</span> <span class="fu">rbind.data.frame</span>(angleTUBG1, <span class="fu">c</span>(angleDat_complete_noZT<span class="sc">$</span>unique_cell_ID[i], angle))</span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "20220516_1"       "121.045933689369"
+[1] "20220516_1"       "121.045933689369"
+[1] "20220516_1"       "121.045933689369"
+[1] "20220516_1"       "121.045933689369"
+[1] "20220516_1"       "29.2913621709842"
+[1] "20220516_1"       "29.2913621709842"
+[1] "20220516_1"       "29.2913621709842"
+[1] "20220516_1"       "29.2913621709842"
+[1] "20220516_1"       "116.160140748292"
+[1] "20220516_1"       "116.160140748292"
+[1] "20220516_1"       "116.160140748292"
+[1] "20220516_1"       "116.160140748292"
+[1] "20220516_1"       "5.36306942004679"
+[1] "20220516_1"       "5.36306942004679"
+[1] "20220516_1"       "5.36306942004679"
+[1] "20220516_1"       "5.36306942004679"
+[1] "20220516_1"       "159.904768808095"
+[1] "20220516_1"       "159.904768808095"
+[1] "20220516_1"       "159.904768808095"
+[1] "20220516_1"       "159.904768808095"
+[1] "20220516_1"       "136.813508539166"
+[1] "20220516_1"       "136.813508539166"
+[1] "20220516_1"       "136.813508539166"
+[1] "20220516_1"       "136.813508539166"
+[1] "20220516_1"      "10.602613105476"
+[1] "20220516_1"      "10.602613105476"
+[1] "20220516_1"      "10.602613105476"
+[1] "20220516_1"      "10.602613105476"
+[1] "20220516_1"       "47.7301289308309"
+[1] "20220516_1"       "47.7301289308309"
+[1] "20220516_1"       "47.7301289308309"
+[1] "20220516_1"       "47.7301289308309"
+[1] "20220516_1"       "138.782645446596"
+[1] "20220516_1"       "138.782645446596"
+[1] "20220516_1"       "138.782645446596"
+[1] "20220516_1"       "138.782645446596"
+[1] "20220516_2"       "22.0798988968805"
+[1] "20220516_2"       "22.0798988968805"
+[1] "20220516_2"       "22.0798988968805"
+[1] "20220516_2"       "22.0798988968805"
+[1] "20220516_2"       "161.277023775944"
+[1] "20220516_2"       "161.277023775944"
+[1] "20220516_2"       "161.277023775944"
+[1] "20220516_2"       "161.277023775944"
+[1] "20220516_2"       "83.1922132705322"
+[1] "20220516_2"       "83.1922132705322"
+[1] "20220516_2"       "83.1922132705322"
+[1] "20220516_2"       "83.1922132705322"
+[1] "20220516_3"       "154.078694537097"
+[1] "20220516_3"       "154.078694537097"
+[1] "20220516_3"       "154.078694537097"
+[1] "20220516_3"       "154.078694537097"
+[1] "20220516_3"       "38.3183849314212"
+[1] "20220516_3"       "38.3183849314212"
+[1] "20220516_3"       "38.3183849314212"
+[1] "20220516_3"       "38.3183849314212"
+[1] "20220516_3"       "138.364953157457"
+[1] "20220516_3"       "138.364953157457"
+[1] "20220516_3"       "138.364953157457"
+[1] "20220516_3"       "138.364953157457"
+[1] "20220516_3"       "175.933681225194"
+[1] "20220516_3"       "175.933681225194"
+[1] "20220516_3"       "175.933681225194"
+[1] "20220516_3"       "175.933681225194"
+[1] "20220516_3"       "14.2109532154397"
+[1] "20220516_3"       "14.2109532154397"
+[1] "20220516_3"       "14.2109532154397"
+[1] "20220516_3"       "14.2109532154397"
+[1] "20220516_5"       "11.4253123070071"
+[1] "20220516_5"       "11.4253123070071"
+[1] "20220516_5"       "11.4253123070071"
+[1] "20220516_5"       "11.4253123070071"
+[1] "20220516_5"       "18.2401984529068"
+[1] "20220516_5"       "18.2401984529068"
+[1] "20220516_5"       "18.2401984529068"
+[1] "20220516_5"       "18.2401984529068"
+[1] "20220516_5"       "10.6196552761551"
+[1] "20220516_5"       "10.6196552761551"
+[1] "20220516_5"       "10.6196552761551"
+[1] "20220516_5"      "49.778001534915"
+[1] "20220516_5"      "49.778001534915"
+[1] "20220516_5"      "49.778001534915"
+[1] "20220516_5"      "49.778001534915"
+[1] "20220516_5"       "2.62526034116111"
+[1] "20220516_5"       "2.62526034116111"
+[1] "20220516_5"       "2.62526034116111"
+[1] "20220516_5"       "2.62526034116111"
+[1] "20220516_5"       "6.08202937019618"
+[1] "20220516_5"       "6.08202937019618"
+[1] "20220516_5"       "6.08202937019618"
+[1] "20220516_5"       "6.08202937019618"
+[1] "20220516_5"       "116.032259551399"
+[1] "20220516_5"       "116.032259551399"
+[1] "20220516_5"       "116.032259551399"
+[1] "20220516_5"       "116.032259551399"
+[1] "20220516_5"       "10.6196552761551"
+[1] "20220812_1"       "32.8503151580065"
+[1] "20220812_1"       "32.8503151580065"
+[1] "20220812_1"       "32.8503151580065"
+[1] "20220812_1"       "32.8503151580065"
+[1] "20220812_1"       "29.7548164068674"
+[1] "20220812_1"       "29.7548164068674"
+[1] "20220812_1"       "29.7548164068674"
+[1] "20220812_1"       "29.7548164068674"
+[1] "20220812_1"       "74.5201228610676"
+[1] "20220812_1"       "74.5201228610676"
+[1] "20220812_1"       "74.5201228610676"
+[1] "20220812_1"       "74.5201228610676"
+[1] "20220812_1"       "26.8109543003487"
+[1] "20220812_1"       "26.8109543003487"
+[1] "20220812_1"       "26.8109543003487"
+[1] "20220812_1"       "26.8109543003487"
+[1] "20220812_1"       "21.8527987953998"
+[1] "20220812_1"       "21.8527987953998"
+[1] "20220812_1"       "21.8527987953998"
+[1] "20220812_1"       "21.8527987953998"
+[1] "20220812_1"       "41.9360460458531"
+[1] "20220812_1"       "41.9360460458531"
+[1] "20220812_1"       "41.9360460458531"
+[1] "20220812_1"       "41.9360460458531"
+[1] "20220812_1"       "85.9912605539522"
+[1] "20220812_1"       "85.9912605539522"
+[1] "20220812_1"       "85.9912605539522"
+[1] "20220812_1"       "85.9912605539522"
+[1] "20220812_1"        "0.229825400001254"
+[1] "20220812_1"        "0.229825400001254"
+[1] "20220812_1"        "0.229825400001254"
+[1] "20220812_1"        "0.229825400001254"
+[1] "20220812_1"       "18.9995168928334"
+[1] "20220812_1"       "18.9995168928334"
+[1] "20220812_1"       "18.9995168928334"
+[1] "20220812_1"       "18.9995168928334"
+[1] "20220812_1"       "29.9315118405078"
+[1] "20220812_1"       "29.9315118405078"
+[1] "20220812_1"       "29.9315118405078"
+[1] "20220812_1"       "29.9315118405078"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(angleTUBG1) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"unique_cell_ID"</span>, <span class="st">"angle"</span>)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>angleTUBG1 <span class="ot">&lt;-</span> angleTUBG1  <span class="sc">|&gt;</span> <span class="fu">distinct</span>(unique_cell_ID, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>angleTUBG1</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   unique_cell_ID             angle
+1    20220516_1_1  121.045933689369
+2    20220516_1_2  29.2913621709842
+3    20220516_1_3  116.160140748292
+4    20220516_1_4  5.36306942004679
+5    20220516_1_5  159.904768808095
+6    20220516_1_6  136.813508539166
+7    20220516_1_7   10.602613105476
+8    20220516_1_8  47.7301289308309
+9    20220516_1_9  138.782645446596
+10   20220516_2_1  22.0798988968805
+11   20220516_2_2  161.277023775944
+12   20220516_2_3  83.1922132705322
+13   20220516_3_1  154.078694537097
+14   20220516_3_2  38.3183849314212
+15   20220516_3_3  138.364953157457
+16   20220516_3_4  175.933681225194
+17   20220516_3_5  14.2109532154397
+18   20220516_5_1  11.4253123070071
+19   20220516_5_2  18.2401984529068
+20   20220516_5_3  10.6196552761551
+21   20220516_5_4   49.778001534915
+22   20220516_5_5  2.62526034116111
+23   20220516_5_6  6.08202937019618
+24   20220516_5_7  116.032259551399
+25   20220812_1_1  32.8503151580065
+26   20220812_1_2  29.7548164068674
+27   20220812_1_3  74.5201228610676
+28   20220812_1_4  26.8109543003487
+29   20220812_1_5  21.8527987953998
+30   20220812_1_6  41.9360460458531
+31   20220812_1_7  85.9912605539522
+32   20220812_1_8 0.229825400001254
+33   20220812_1_9  18.9995168928334
+34  20220812_1_10  29.9315118405078</code></pre>
+</div>
+</div>
+</section>
+<section id="calculate-the-distance-of-each-cell-from-the-zt" class="level1">
+<h1>calculate the distance of each cell from the ZT</h1>
+<p>The distance of the center of the PE cells from the ZT. Will take the PE_N value versus the ZT values</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>ZT_dist <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(angleDat_complete_noZT<span class="sc">$</span>unique_cell_ID)) {</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="co"># select the cells</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>     temp <span class="ot">&lt;-</span> angleDat_complete_noZT<span class="sc">|&gt;</span> <span class="fu">filter</span>(unique_cell_ID <span class="sc">==</span> unique_cell_ID[i]) </span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>     <span class="co">#select the corresponding embryo ZT point</span></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>     temp_ZT <span class="ot">&lt;-</span> angleDat_complete <span class="sc">|&gt;</span> </span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>                <span class="fu">filter</span>(CellType <span class="sc">==</span> <span class="st">"ZT"</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>                <span class="fu">filter</span>(unique_ID_Embryon <span class="sc">==</span> <span class="fu">paste0</span>(<span class="fu">str_split_fixed</span>(angleDat_complete<span class="sc">$</span>unique_cell_ID[i], <span class="st">"_"</span>, <span class="at">n =</span> <span class="dv">3</span>)[<span class="dv">1</span>,<span class="dv">1</span>],  </span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>                                                   <span class="st">"_"</span>,  </span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>                                                   <span class="fu">str_split_fixed</span>(angleDat_complete<span class="sc">$</span>unique_cell_ID[i], <span class="st">"_"</span>, <span class="at">n =</span> <span class="dv">3</span>)[<span class="dv">1</span>,<span class="dv">2</span>])) </span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>     </span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>     ZT_left_vec <span class="ot">&lt;-</span> temp <span class="sc">|&gt;</span> <span class="fu">filter</span>(CenterName <span class="sc">==</span> <span class="st">"N"</span>) <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="st">"X"</span>,<span class="st">"Y"</span>,<span class="st">"Z"</span>) <span class="sc">-</span> </span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>                  temp_ZT <span class="sc">|&gt;</span> <span class="fu">filter</span>(cellNumber <span class="sc">==</span> <span class="st">"left"</span>) <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="st">"X"</span>,<span class="st">"Y"</span>,<span class="st">"Z"</span>)</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a>     </span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>     ZT_right_vec <span class="ot">&lt;-</span> temp <span class="sc">|&gt;</span> <span class="fu">filter</span>(CenterName <span class="sc">==</span> <span class="st">"N"</span>) <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="st">"X"</span>,<span class="st">"Y"</span>,<span class="st">"Z"</span>) <span class="sc">-</span> </span>
+<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a>                  temp_ZT <span class="sc">|&gt;</span> <span class="fu">filter</span>(cellNumber <span class="sc">==</span> <span class="st">"right"</span>) <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="st">"X"</span>,<span class="st">"Y"</span>,<span class="st">"Z"</span>)</span>
+<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>     </span>
+<span id="cb22-19"><a href="#cb22-19" aria-hidden="true" tabindex="-1"></a>     <span class="co"># take the smallest distance from ZT left or right </span></span>
+<span id="cb22-20"><a href="#cb22-20" aria-hidden="true" tabindex="-1"></a>     ZT_dist_min <span class="ot">&lt;-</span> <span class="fu">min</span>(<span class="fu">sqrt</span>(ZT_left_vec[<span class="dv">1</span>]<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> ZT_left_vec[<span class="dv">2</span>]<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> ZT_left_vec[<span class="dv">3</span>]<span class="sc">^</span><span class="dv">2</span>), </span>
+<span id="cb22-21"><a href="#cb22-21" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">sqrt</span>(ZT_right_vec[<span class="dv">1</span>]<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> ZT_right_vec[<span class="dv">2</span>]<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> ZT_right_vec[<span class="dv">3</span>]<span class="sc">^</span><span class="dv">2</span>)) <span class="co"># The euclidean distance from the ZT</span></span>
+<span id="cb22-22"><a href="#cb22-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-23"><a href="#cb22-23" aria-hidden="true" tabindex="-1"></a>ZT_dist <span class="ot">&lt;-</span> <span class="fu">rbind.data.frame</span>(ZT_dist, <span class="fu">c</span>(angleDat_complete_noZT<span class="sc">$</span>unique_cell_ID[i], ZT_dist_min))</span>
+<span id="cb22-24"><a href="#cb22-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-25"><a href="#cb22-25" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb22-26"><a href="#cb22-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-27"><a href="#cb22-27" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(ZT_dist) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"unique_cell_ID"</span>, <span class="st">"ZT_dist"</span>)</span>
+<span id="cb22-28"><a href="#cb22-28" aria-hidden="true" tabindex="-1"></a>ZT_dist <span class="ot">&lt;-</span> ZT_dist  <span class="sc">|&gt;</span> <span class="fu">distinct</span>(unique_cell_ID, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb22-29"><a href="#cb22-29" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(ZT_dist<span class="sc">$</span>ZT_dist)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "character"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(ZT_dist)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  unique_cell_ID          ZT_dist
+1   20220516_1_1 39.3954312071844
+2   20220516_1_2 68.9492567037528
+3   20220516_1_3               55
+4   20220516_1_4 80.7527089328897
+5   20220516_1_5 75.1664818918645
+6   20220516_1_6 61.3269924258479</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>angle_dist_TUBG1 <span class="ot">&lt;-</span> <span class="fu">merge</span>(angleTUBG1, ZT_dist, <span class="at">by =</span> <span class="st">"unique_cell_ID"</span>)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(angle_dist_TUBG1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  unique_cell_ID            angle          ZT_dist
+1   20220516_1_1 121.045933689369 39.3954312071844
+2   20220516_1_2 29.2913621709842 68.9492567037528
+3   20220516_1_3 116.160140748292               55
+4   20220516_1_4 5.36306942004679 80.7527089328897
+5   20220516_1_5 159.904768808095 75.1664818918645
+6   20220516_1_6 136.813508539166 61.3269924258479</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(angle_dist_TUBG1<span class="sc">$</span>angle)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "character"</code></pre>
+</div>
+</div>
+</section>
+<section id="plot-correlation-from-angel-of-tugb1-to-distance-to-zt_dist" class="level1">
+<h1>Plot correlation from angel of TUGB1 to distance to ZT_dist</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>angle_dist_TUBG1<span class="sc">$</span>angle <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(angle_dist_TUBG1<span class="sc">$</span>angle)</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>angle_dist_TUBG1<span class="sc">$</span>ZT_dist <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(angle_dist_TUBG1<span class="sc">$</span>ZT_dist)</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>angle_dist_TUBG1 <span class="ot">&lt;-</span> <span class="fu">merge</span>(angle_dist_TUBG1, angleDat_complete, <span class="at">by =</span> <span class="st">"unique_cell_ID"</span>)</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggscatter</span>(angle_dist_TUBG1, <span class="at">x =</span> <span class="st">"ZT_dist"</span>, <span class="at">y =</span> <span class="st">"angle"</span>, <span class="at">color =</span> <span class="st">"unique_ID_Embryon"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="MigrAngl_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="st">"angle_dist_TUBG1.pdf"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Saving 7 x 5 in image</code></pre>
+</div>
+</div>
 </section>
 
 </main>

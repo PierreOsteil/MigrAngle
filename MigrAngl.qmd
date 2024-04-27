@@ -100,7 +100,6 @@ PE_vec <- temp |> filter(CenterName == "C") |> select("X","Y","Z") -
 
 # Apply the function to calculate the angle
 angle <- angle_between_vectors(TE_vec, PE_vec)
-print(paste0(c(angleDat_complete_noZT$unique_ID_Embryon[i] ,angleDat_complete_noZT$cellNumber[j], angle), sep = ""))
 
 #increment the table
 angleTUBG1 <- rbind.data.frame(angleTUBG1, c(angleDat_complete_noZT$unique_cell_ID[i], angle))
@@ -161,10 +160,10 @@ class(angle_dist_TUBG1$angle)
 ```{r}
 angle_dist_TUBG1$angle <- as.numeric(angle_dist_TUBG1$angle)
 angle_dist_TUBG1$ZT_dist <- as.numeric(angle_dist_TUBG1$ZT_dist)
+angle_dist_TUBG1 <- merge(angle_dist_TUBG1, angleDat_complete, by = "unique_cell_ID")
 
-
-ggscatter(angle_dist_TUBG1, x = "ZT_dist", y = "angle", color = "embryoID", add = "reg.line", conf.int = TRUE,)
-
+ggscatter(angle_dist_TUBG1, x = "ZT_dist", y = "angle", color = "unique_ID_Embryon")
+ggsave("angle_dist_TUBG1.pdf")
 
 
 ```
