@@ -154,8 +154,7 @@ head(angle_dist_TUBG1)
 class(angle_dist_TUBG1$angle)
 ```
 
-# Plot correlation from angel of TUGB1 to distance to ZT_dist
-
+# Plot correlation from angle of TUGB1 to distance to ZT_dis
 
 ```{r}
 angle_dist_TUBG1$angle <- as.numeric(angle_dist_TUBG1$angle)
@@ -164,6 +163,33 @@ angle_dist_TUBG1 <- merge(angle_dist_TUBG1, angleDat_complete, by = "unique_cell
 
 ggscatter(angle_dist_TUBG1, x = "ZT_dist", y = "angle", color = "unique_ID_Embryon")
 ggsave("angle_dist_TUBG1.pdf")
+```
+
+# Polar coordiante plot
+```{r}
+angleTUBG1$angle <- as.numeric(angleTUBG1$angle)
 
 
+angle_plot2 <- ggplot(angleTUBG1, aes(x = angle)) +
+  geom_histogram(binwidth = 10, fill = "blue", color = "white", alpha = 0.8) +
+  scale_x_continuous(limits = c(0, 360), breaks = seq(0, 360, by = 45)) +
+  labs(x = "Angle (°)", 
+       y = "Centrosomes number") +
+  theme_minimal(base_size = 15) +
+  theme(
+    text = element_text(color = "black"),
+    axis.title = element_text(face = "bold", size = 24),
+    axis.text.x = element_text(size = 20, color = "grey30"),  # Améliore les étiquettes des axes
+    axis.text.y = element_text(size = 18, color = "black", vjust = 1.5),  # Déplace les étiquettes des graduations verticales
+    legend.position = "none",
+    panel.grid.major = element_line(color = "grey80"),
+    panel.grid.minor = element_blank()
+  ) +
+  coord_polar(start = 0, clip = "off")
+
+# Afficher le graphique
+print(angle_plot2)
+
+# Sauvegarde de l'image
+ggsave("quantif_migr_angle_TUBG1_EN.jpg", width = 15, height = 15, units = "cm")
 ```
