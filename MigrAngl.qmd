@@ -165,7 +165,7 @@ ggscatter(angle_dist_TUBG1, x = "ZT_dist", y = "angle", color = "unique_ID_Embry
 ggsave("angle_dist_TUBG1.pdf")
 ```
 
-# Polar coordiante plot
+# Polar coordinate plot
 ```{r}
 angleTUBG1$angle <- as.numeric(angleTUBG1$angle)
 
